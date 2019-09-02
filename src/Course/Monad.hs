@@ -169,3 +169,6 @@ infixr 1 <=<
 instance Monad IO where
   (=<<) =
     (P.=<<)
+
+mapM :: Applicative f => (a1 -> f a) -> List a1 -> f (List a)
+mapM = (sequence .) . map
