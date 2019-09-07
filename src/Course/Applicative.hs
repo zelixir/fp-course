@@ -404,3 +404,6 @@ fail =
   -> f b
 (>>) =
   (*>)
+
+($>) :: Applicative f => f a -> b -> f b
+($>) a b = a *> pure b
