@@ -83,7 +83,10 @@ data Op =
 convertInteractive ::
   IO ()
 convertInteractive =
-  error "todo: Course.Interactive#convertInteractive"
+  putStr "Enter a string: " >-
+  getLine >>= \s -> 
+  putStrLn (toUpper <$> s)
+          
 
 -- |
 --
@@ -111,7 +114,12 @@ convertInteractive =
 reverseInteractive ::
   IO ()
 reverseInteractive =
-  error "todo: Course.Interactive#reverseInteractive"
+    putStrLn "enter the input file path: " >-
+    getLine >>= \i ->
+    putStrLn "enter the output file path: " >-
+    getLine >>= \o ->
+    readFile i >>= \ic ->
+    writeFile o (reverse ic)
 
 -- |
 --
@@ -137,7 +145,15 @@ reverseInteractive =
 encodeInteractive ::
   IO ()
 encodeInteractive =
-  error "todo: Course.Interactive#encodeInteractive"
+    putStrLn "enter URL: " >-
+    getLine >>= \line ->
+    putStrLn (encode line)
+  where encode = flatMap encode1 
+        encode1 ' ' = "%20"
+        encode1 '\t' = "%09"
+        encode1 '\"' = "%22"
+        encode1 x = x :. Nil
+
 
 interactive ::
   IO ()
