@@ -26,6 +26,11 @@ import Course.Functor
 import Course.Applicative
 import Course.Monad
 
+import Course.Parser
+import Course.MoreParser
+import Prelude as P (read)
+import Data.List ((!!))
+
 -- $setup
 -- >>> :set -XOverloadedStrings
 
@@ -320,8 +325,35 @@ fromChar _ =
 --
 -- >>> dollars "456789123456789012345678901234567890123456789012345678901234567890.12"
 -- "four hundred and fifty-six vigintillion seven hundred and eighty-nine novemdecillion one hundred and twenty-three octodecillion four hundred and fifty-six septendecillion seven hundred and eighty-nine sexdecillion twelve quindecillion three hundred and forty-five quattuordecillion six hundred and seventy-eight tredecillion nine hundred and one duodecillion two hundred and thirty-four undecillion five hundred and sixty-seven decillion eight hundred and ninety nonillion one hundred and twenty-three octillion four hundred and fifty-six septillion seven hundred and eighty-nine sextillion twelve quintillion three hundred and forty-five quadrillion six hundred and seventy-eight trillion nine hundred and one billion two hundred and thirty-four million five hundred and sixty-seven thousand eight hundred and ninety dollars and twelve cents"
+
 dollars ::
   Chars
   -> Chars
-dollars =
-  error "todo: Course.Cheque#dollars"
+dollars = (?? "") . (p <.> )
+  where p = lift2 show_dollars integer $ option "" (is '.' *> decimal)
+        integer = list1 $ digit <* list (satisfy $ \x -> x /= '.' && not (isDigit x))
+        decimal = thisMany 2 $ option '0' (digit <* list (satisfy $ \x -> not (isDigit x)))
+
+show_dollars :: Chars -> Chars -> Chars
+show_dollars i d = show_i i ++ " dollars and " ++ show_i d ++ " cents"
+  where show_i = unwords . reverse . zipWith show_illion illion . group3
+        show_illion unit num = show_integer num ++ if unit == "" then unit else " " ++ unit 
+        
+group3 :: Chars -> List Int
+group3 = unfoldr group3_f . reverse
+  where group3_f Nil = Empty
+        group3_f xs = Full (P.read . hlist . reverse . take 3 $ xs, drop 3 xs)
+  
+show_integer :: Int -> Chars
+show_integer i | h > 0 = show_integer h ++ " hundred and " ++ show_integer r
+  where (h, r) = divMod i 100
+show_integer i | h > 1 = names !! (h - 2) ++ if r > 0 then "-" ++ show_integer r else ""
+  where (h, r) = divMod i 10
+        names = ["twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+show_integer i | i > 10 = names !! (i - 11)
+  where names = ["eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+show_integer i = names !! i
+  where names = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+
+
+
